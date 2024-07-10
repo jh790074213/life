@@ -8,8 +8,10 @@ import com.jh.service.ISeckillVoucherService;
 import com.jh.service.IVoucherOrderService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jh.utils.RedisIdWorker;
+import com.jh.utils.SimpleRedisLock;
 import com.jh.utils.UserHolder;
 import org.springframework.aop.framework.AopContext;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,8 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     private ISeckillVoucherService seckillVoucherService;
     @Resource
     private RedisIdWorker redisIdWorker;
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     @Override
     public Result seckillVoucher(Long voucherId) {
@@ -51,10 +55,24 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             return Result.fail("库存不足");
         }
         Long userId = UserHolder.getUser().getId();
-        synchronized (userId.toString().intern()) {
+        // 单机实现悲观锁
+        // synchronized (userId.toString().intern()) {
+        //     // 拿到代理对象，通过代理对象事务才生效
+        //     IVoucherOrderService proxy = (IVoucherOrderService) AopContext.currentProxy();
+        //     return proxy.createVoucherOrder(voucherId);
+        // }
+        // 锁用户，对于用户下的线程只有一个能抢
+        SimpleRedisLock redisLock = new SimpleRedisLock("order:"+userId,stringRedisTemplate);
+        boolean isLock = redisLock.tryLock(1200);
+        if (!isLock) {
+            return Result.fail("一人只能抢一单");
+        }
+        try {
             // 拿到代理对象，通过代理对象事务才生效
             IVoucherOrderService proxy = (IVoucherOrderService) AopContext.currentProxy();
             return proxy.createVoucherOrder(voucherId);
+        } finally {
+            redisLock.unlock();
         }
     }
 
