@@ -1,8 +1,11 @@
 package com.jh;
 
 import cn.hutool.json.JSONUtil;
+import com.jh.dto.LoginFormDTO;
+import com.jh.dto.Result;
 import com.jh.entity.Shop;
 import com.jh.service.impl.ShopServiceImpl;
+import com.jh.service.impl.UserServiceImpl;
 import com.jh.utils.CacheClient;
 import com.jh.utils.RedisData;
 import com.jh.utils.RedisIdWorker;
@@ -12,6 +15,11 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 
 import javax.annotation.Resource;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,6 +29,8 @@ import static com.jh.utils.RedisConstants.CACHE_SHOP_KEY;
 
 @SpringBootTest
 class HmDianPingApplicationTests {
+    @Resource
+    private UserServiceImpl userService;
     @Resource
     private ShopServiceImpl shopService;
     @Resource
@@ -57,6 +67,26 @@ class HmDianPingApplicationTests {
         cacheClient.setWithLogicExpire(CACHE_SHOP_KEY+1L,shop,10L, TimeUnit.SECONDS);
 
     }
+    @Test
+    void userLogin(){
+        // Long num = 13466803560L;
+        // for (int i = 0; i < 1000; i++) {
+        //     LoginFormDTO loginFormDTO = new LoginFormDTO();
+        //     loginFormDTO.setPhone(num.toString());
+        //     Result login = userService.login(loginFormDTO);
+        //     num++;
+        // }
+        Set<String> keys = stringRedisTemplate.keys("login:token:*");
 
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("tokens.txt"))) {
+            for (String line : keys) {
+                int i = line.lastIndexOf(":");
+                writer.write(line.substring(i+1));
+                writer.newLine();  // 写入换行符
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 }

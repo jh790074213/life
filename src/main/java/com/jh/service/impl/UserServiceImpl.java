@@ -60,18 +60,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     }
 
     @Override
-    public Result login(LoginFormDTO loginForm, HttpSession session) {
+    public Result login(LoginFormDTO loginForm) {
         String phone = loginForm.getPhone();
         if (RegexUtils.isPhoneInvalid(phone)) {
             return Result.fail("手机格式错误");
         }
         // Object cacheCode = session.getAttribute("code");
         // 查询redis
-        String cacheCode = stringRedisTemplate.opsForValue().get(LOGIN_CODE_KEY + phone);
-        String code = loginForm.getCode();
-        if (cacheCode == null || !cacheCode.equals(code)) {
-            return Result.fail("验证码错误");
-        }
+        // String cacheCode = stringRedisTemplate.opsForValue().get(LOGIN_CODE_KEY + phone);
+        // String code = loginForm.getCode();
+        // if (cacheCode == null || !cacheCode.equals(code)) {
+        //     return Result.fail("验证码错误");
+        // }
         // 用户信息查询
         User user = query().eq("phone", phone).one();
         // 判断用户是否存在
