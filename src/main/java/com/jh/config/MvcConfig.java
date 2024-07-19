@@ -22,8 +22,7 @@ public class MvcConfig implements WebMvcConfigurer {
                         "/voucher/**",
                         "/shop/**",
                         "/user/code",
-                        "/user/login",
-                        "/blog/hot"
+                        "/user/login"
                         ).order(1);
         //拦截所有,order控制拦截顺序，默认都为0按照编写顺序拦截
         registry.addInterceptor(new RefreshTokenInterceptor(stringRedisTemplate)).addPathPatterns("/**").order(0);

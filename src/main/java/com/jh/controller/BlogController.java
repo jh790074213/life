@@ -20,8 +20,7 @@ import java.util.List;
  * 前端控制器
  * </p>
  *
- * @author 虎哥
- * @since 2021-12-22
+ * @author jh
  */
 @RestController
 @RequestMapping("/blog")
@@ -43,10 +42,8 @@ public class BlogController {
 
     @PutMapping("/like/{id}")
     public Result likeBlog(@PathVariable("id") Long id) {
-        // 修改点赞数量
-        blogService.update()
-                .setSql("liked = liked + 1").eq("id", id).update();
-        return Result.ok();
+
+        return blogService.likeBlog(id);
     }
 
     @GetMapping("/of/me")
@@ -68,5 +65,20 @@ public class BlogController {
     @GetMapping("/{id}")
     public Result queryBlogById(@PathVariable("id")Long id){
         return blogService.queryBlogById(id);
+    }
+    @GetMapping("/likes/{id}")
+    public Result queryBlogLikes(@PathVariable("id")Long id){
+        return blogService.queryBlogLikes(id);
+    }
+    @GetMapping("/of/user")
+    public Result queryBlogByUserId(
+            @RequestParam(value = "current", defaultValue = "1") Integer current,
+            @RequestParam("id") Long id) {
+        // 根据用户查询
+        Page<Blog> page = blogService.query()
+                .eq("user_id", id).page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
+        // 获取当前页数据
+        List<Blog> records = page.getRecords();
+        return Result.ok(records);
     }
 }
